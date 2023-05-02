@@ -55,10 +55,16 @@ async def echo(message):
             cursor.execute(f"SELECT * from messages where admin_message_id={message['reply_to_message']['message_id']} and admin_chat_id={target_chat}")
             user_id = cursor.fetchone()[2]
             
+            if(message.text=="/razban" or message.text=="разбан" or message.text == "Разбан"):
+                cursor.execute(f"DELETE FROM blacklist WHERE tg_id={user_id}")
+                
+                
             if(message.text=="/ban" or message.text=="бан" or message.text == "Бан"):
                 cursor.execute(f"INSERT INTO blacklist (tg_id) VALUES ({user_id})")
-            await bot.copy_message(user_id, target_chat, message["message_id"])
+            else:
+                await bot.copy_message(user_id, target_chat, message["message_id"])
 
+            
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
