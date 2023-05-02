@@ -57,9 +57,7 @@ async def echo(message):
             
             if(message.text=="/razban" or message.text=="разбан" or message.text == "Разбан"):
                 cursor.execute(f"DELETE FROM blacklist WHERE tg_id={user_id}")
-                
-                
-            if(message.text=="/ban" or message.text=="бан" or message.text == "Бан"):
+            elif(message.text=="/ban" or message.text=="бан" or message.text == "Бан"):
                 cursor.execute(f"INSERT INTO blacklist (tg_id) VALUES ({user_id})")
             else:
                 await bot.copy_message(user_id, target_chat, message["message_id"])
