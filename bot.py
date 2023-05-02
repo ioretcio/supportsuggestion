@@ -8,6 +8,8 @@ from pytz import timezone
 from datetime import datetime
 import datetime
 
+
+
 ukraine_time = timezone('Europe/Kiev')
 log = logging.getLogger('ioretcio')
 log.addHandler(journal.JournalHandler())
@@ -40,17 +42,24 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(content_types=['any'])
 async def echo(message):
     if( message["from"]["id"] == message["chat"]["id"]):
-        print(target_chat, message["chat"]["id"], message["message_id"])
-        result =await bot.forward_message(target_chat, message["chat"]["id"], message["message_id"])
+        with conn.cursor() as cursor:
+            cursor.execute(f"SELECT count(*) from blacklist where tg_id={message['from']['id']}")
+            result = cursor.fetchone()
+            if (result[0]==0):
+                result =await bot.forward_message(target_chat, message["chat"]["id"], message["message_id"])
         with conn.cursor() as cursor:
             cursor.execute(f"INSERT INTO messages (from_chat_id, from_message_id, admin_chat_id, admin_message_id, time, bot_id)\
                 VALUES ({message['message_id']}, {message['from']['id']}, {target_chat}, {result['message_id']}, { datetime.datetime.timestamp(datetime.datetime.now(ukraine_time))  },{id}  )")
     else:
         with conn.cursor() as cursor:
             cursor.execute(f"SELECT * from messages where admin_message_id={message['reply_to_message']['message_id']} and admin_chat_id={target_chat}")
-            result = cursor.fetchone()
-            await bot.copy_message(result[2], target_chat, message["message_id"])
+            user_id = cursor.fetchone()[2]
             
+            if(message.text=="/ban" or message.text=="бан" or message.text == "Бан"):
+                cursor.execute(f"INSERT INTO blacklist (tg_id) VALUES ({user_id})")
+            await bot.copy_message(user_id, target_chat, message["message_id"])
+
+
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
     
